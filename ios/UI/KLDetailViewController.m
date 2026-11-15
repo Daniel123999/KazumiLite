@@ -26,6 +26,13 @@
 @property (nonatomic, assign) CGFloat episodeTableHeight;
 @property (nonatomic, strong) UILabel *episodeTitleLabel;
 @property (nonatomic, strong) UILabel *commentTitleLabel;
+- (void)buildHeader;
+- (void)buildHeaderContent;
+- (void)buildEpisodeSection;
+- (void)buildCommentSection;
+- (void)layoutSections;
+- (void)loadDetails;
+- (NSString *)typeName:(NSInteger)type;
 @end
 
 @implementation KLDetailViewController
@@ -170,7 +177,8 @@
     y += 26;
     CGFloat commentHeight = 0;
     for (NSDictionary *c in self.comments) {
-        NSString *text = c[@"comment"] ?: @"";
+        id raw = c[@"comment"];
+        NSString *text = [raw isKindOfClass:[NSString class]] ? raw : @"";
         commentHeight += MAX(58, [KLComponents heightForText:text width:width - 44 font:[KLTheme font:12]] + 38);
     }
     self.commentTable.frame = CGRectMake(10, y, width - 20, commentHeight);
@@ -281,7 +289,8 @@
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
     if (tableView == self.episodeTable) return 44;
     NSDictionary *c = self.comments[indexPath.row];
-    NSString *text = c[@"comment"] ?: @"";
+    id raw = c[@"comment"];
+    NSString *text = [raw isKindOfClass:[NSString class]] ? raw : @"";
     return MAX(58, [KLComponents heightForText:text width:self.view.bounds.size.width - 44 font:[KLTheme font:12]] + 38);
 }
 
@@ -299,10 +308,12 @@
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     } else {
         NSDictionary *c = self.comments[indexPath.row];
-        NSDictionary *user = c[@"user"];
-        cell.textLabel.text = [NSString stringWithFormat:@"%@  ★ %@", user[@"nickname"] ?: @"匿名", c[@"score"] ?: @0];
+        NSDictionary *user = [c[@"user"] isKindOfClass:[NSDictionary class]] ? c[@"user"] : nil;
+        NSString *nick = [user[@"nickname"] isKindOfClass:[NSString class]] ? user[@"nickname"] : @"匿名";
+        cell.textLabel.text = [NSString stringWithFormat:@"%@  ★ %@", nick, c[@"score"] ?: @0];
         cell.textLabel.font = [KLTheme mediumFont:11];
-        cell.detailTextLabel.text = c[@"comment"] ?: @"";
+        id raw = c[@"comment"];
+        cell.detailTextLabel.text = [raw isKindOfClass:[NSString class]] ? raw : @"";
         cell.detailTextLabel.numberOfLines = 0;
         cell.detailTextLabel.font = [KLTheme font:12];
         cell.accessoryType = UITableViewCellAccessoryNone;

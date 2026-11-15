@@ -7,6 +7,7 @@
 #import "KLRuleEngine.h"
 #import "KLDetailViewController.h"
 #import "KLSourceViewController.h"
+#import "KLImageSearchViewController.h"
 
 @interface KLSearchViewController () <UISearchBarDelegate, UITableViewDataSource, UITableViewDelegate>
 @property (nonatomic, strong) UISearchBar *searchBar;
@@ -60,6 +61,12 @@
     self.hintLabel.frame = CGRectMake(30, 180, self.view.bounds.size.width - 60, 60);
     self.hintLabel.text = @"输入关键词开始搜索\n视频源模式会同时调用所有已启用规则";
     [self.view addSubview:self.hintLabel];
+
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[KLComponents icon:KLIconCamera size:20 color:[KLTheme textPrimary]] style:UIBarButtonItemStylePlain target:self action:@selector(openImageSearch)];
+}
+
+- (void)openImageSearch {
+    [self.navigationController pushViewController:[[KLImageSearchViewController alloc] init] animated:YES];
 }
 
 - (void)viewWillAppear:(BOOL)animated {

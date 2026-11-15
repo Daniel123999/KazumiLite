@@ -487,8 +487,14 @@
     [self.danmakuView clear];
 }
 
-- (void)nextEpisode { if (self.nextHandler) self.nextHandler(self); }
-- (void)previousEpisode { if (self.previousHandler) self.previousHandler(self); }
+- (void)nextEpisode {
+    if (self.nextHandler && self.nextHandler(self)) return;
+    if (self.episodeIndex + 1 < (NSInteger)self.road.urls.count) [self switchToEpisode:self.episodeIndex + 1];
+}
+- (void)previousEpisode {
+    if (self.previousHandler && self.previousHandler(self)) return;
+    if (self.episodeIndex > 0) [self switchToEpisode:self.episodeIndex - 1];
+}
 
 - (void)showEpisodeList {
     UIAlertController *ac = [UIAlertController alertControllerWithTitle:@"选集" message:nil preferredStyle:UIAlertControllerStyleActionSheet];
