@@ -11,6 +11,8 @@ iPhone 4S / iOS 9.3.6 / armv7 的番剧采集与在线观看客户端。参考 [
 - **追番与历史**：本地追番状态、观看进度、继续观看、Bangumi Token 同步
 - **WebDAV**：历史、追番、规则、弹幕偏好备份 / 恢复 / 双向合并
 - **离线下载**：HLS 分片下载、AES-128 解密、本地播放列表、MP4 直下
+- **图片识番**：trace.moe 截图识别并匹配 Bangumi 条目
+- **DLNA 投屏**：SSDP 发现局域网电视，AVTransport 推送当前视频
 - **应用内更新**：Gitee / GitHub `update.json`，下载 IPA 后调用 `ipainstaller` / MobileInstallation 安装
 
 ## 安装
@@ -39,7 +41,8 @@ CI：`.github/workflows/build-ios.yml`（ubuntu-latest + Theos + 预编译 iOS �
 ## iOS 9 限制
 
 - **Anime4K 实时超分**：A5 GPU 与 AVPlayer 管线无法承载多 pass 着色器，本版本不提供（不伪装为已实现）。
-- **一起看（SyncPlay）/ DLNA 投屏**：协议与服务端依赖较重，本版本未实现。
+- **一起看（SyncPlay）**：协议与公共服务器依赖较重，本版本未实现。
+- **DLNA**：仅支持标准 MediaRenderer + AVTransport 的基础推送，部分电视需要特定 profile。
 - **部分视频源**：新版 WebKit / DRM / 验证码源在 iPhone 4S 上可能无法解析，可切换到「网页播放」或换源。
 - **HTTPS**：iOS 9 根证书库较旧，网络层对失败证书采用放行策略（与 YueduLite 一致），仅在越狱自用场景使用。
 

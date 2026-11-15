@@ -96,6 +96,26 @@ ios/
 
 ## 5. 待验证 / 已知风险
 
+### 5.0 已有构建证据（2026-11-15）
+
+- GitHub Actions run `43695586882`（commit `abca965`）**成功**。
+- Artifact `KazumiLite-ipa` → `KazumiLite.ipa`，342,402 B。
+- SHA256 `BF0E663FD35D549D2B2AFB06487F2965282D9723330E5EF2BA1DF27A7B79C1EA`。
+- `inspect_ipa.py`：`armv7 (cpu=12, subtype=9)`、`com.kazumilite.app`、`1.0.0 (1)`、minOS 9.0、schemes `kazumilite/kazumi`、资源 `rules/AGE.json`、`platform-application` entitlement 存在。
+- 本轮仅完成包级验证；**尚未在 iPhone 4S 真机安装启动**。
+- 注意：`repo_pipeline.py build` 在下载 Artifact 时遇到 401（SAS 重定向被重新编码），本次 IPA 由同一 Artifact 手动下载后验证。
+
+### 5.1 待真机验证
+
+1. 启动、主题、时间表/热门/搜索。
+2. 规则搜索 → 章节 → 解析 → 播放（含 Referer/UA）。
+3. 弹幕加载与 4S 上的帧率；B 站接口是否 403。
+4. 追番、历史、Bangumi Token 同步、WebDAV 备份/恢复。
+5. HLS 下载 + 本地播放、AES-128。
+6. DLNA 发现与投屏。
+7. 图片识番上传。
+8. 应用内更新（需要发布 v1.0.1 才能做 N→N+1 测试）。
+
 1. **尚未完成真机与 CI 构建验证**：本报告生成时代码已写完，但还没有 Actions 运行结果与 armv7 IPA。
 2. **libxml2 链接**：需确认 iPhoneOS9.3.sdk 的 `libxml2.tbd` 与头文件路径；CI 已加入 `-I$(THEOS)/sdks/iPhoneOS9.3.sdk/usr/include/libxml2`。
 3. **弹弹Play 凭据**：上游在 CI 注入 secret；本项目默认走 B 站公开接口，弹弹需要在设置中填写 AppId/Secret。

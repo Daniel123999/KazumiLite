@@ -130,8 +130,9 @@ static NSString *KLSHA256Base64(NSString *input) {
     url = [KLHttp appendQuery:@{@"withRelated": @"true", @"chConvert": @"0"} toURL:url];
     [KLHttp GET:url headers:[self dandanHeadersForPath:path] completion:^(id json, NSData *data, NSHTTPURLResponse *response, NSError *error) {
         NSMutableArray *entries = [NSMutableArray array];
-        if ([json isKindOfClass:[NSDictionary class]]) {
+        if ([json isKindOfClass:[NSDictionary class]] && [json[@"comments"] isKindOfClass:[NSArray class]]) {
             for (NSDictionary *d in json[@"comments"]) {
+                if (![d isKindOfClass:[NSDictionary class]]) continue;
                 KLDanmakuEntry *e = [KLDanmakuEntry fromDanDanDictionary:d];
                 if (e) [entries addObject:e];
             }
@@ -156,7 +157,10 @@ static NSString *KLSHA256Base64(NSString *input) {
         NSString *path = [NSString stringWithFormat:@"/api/v2/bangumi/bgmtv/%ld", (long)item.bid];
         NSString *url = [@"https://api.dandanplay.net" stringByAppendingString:path];
         [KLHttp GET:url headers:[self dandanHeadersForPath:path] completion:^(id json, NSData *data, NSHTTPURLResponse *response, NSError *error) {
-            NSInteger dandanId = [json isKindOfClass:[NSDictionary class]] ? [json[@"bangumiId"] integerValue] : 0;
+            NSInteger dandanId = 0;
+            if ([json isKindOfClass:[NSDictionary class]] && [json[@"bangumiId"] respondsToSelector:@selector(integerValue)]) {
+                dandanId = [json[@"bangumiId"] integerValue];
+            }
             if (dandanId > 0) {
                 [weakSelf fetchDanDanComments:dandanId episode:episode completion:^(NSArray *entries, NSError *e) {
                     if (entries.count > 0) {
@@ -197,15 +201,22 @@ static NSString *KLSHA256Base64(NSString *input) {
         if ([json isKindOfClass:[NSDictionary class]] && [json[@"data"] isKindOfClass:[NSDictionary class]]) {
             results = json[@"data"][@"result"];
         }
+        if (![results isKindOfClass:[NSArray class]]) results = nil;
         if (![results isKindOfClass:[NSArray class]] || results.count == 0) {
             // Try the public PGC search endpoint as a fallback.
             NSString *u2 = [KLHttp appendQuery:@{@"keyword": title ?: @"", @"season_type": @"1", @"page": @"1", @"pagesize": @"10"} toURL:@"https://api.bilibili.com/pgc/season/search/new/type"];
             [KLHttp GET:u2 headers:headers completion:^(id j2, NSData *d2, NSHTTPURLResponse *r2, NSError *e2) {
                 NSArray *list = nil;
-                if ([j2 isKindOfClass:[NSDictionary class]]) list = j2[@"data"][@"list"] ?: j2[@"result"];
+                if ([j2 isKindOfClass:[NSDictionary class]]) {
+                    id data = j2[@"data"];
+                    if ([data isKindOfClass:[NSDictionary class]]) list = data[@"list"];
+                    if (![list isKindOfClass:[NSArray class]]) list = j2[@"result"];
+                }
+                if (![list isKindOfClass:[NSArray class]]) list = nil;
                 NSInteger seasonId = 0;
                 NSString *matched = title;
                 for (NSDictionary *d in list) {
+                    if (![d isKindOfClass:[NSDictionary class]]) continue;
                     NSInteger sid = [d[@"season_id"] integerValue];
                     if (sid > 0) { seasonId = sid; matched = d[@"title"] ?: title; break; }
                 }
@@ -221,6 +232,7 @@ static NSString *KLSHA256Base64(NSString *input) {
         }
         NSDictionary *best = nil;
         for (NSDictionary *d in results) {
+            if (![d isKindOfClass:[NSDictionary class]]) continue;
             NSInteger sid = [d[@"season_id"] integerValue];
             if (sid > 0) { best = d; break; }
         }
@@ -241,13 +253,16 @@ static NSString *KLSHA256Base64(NSString *input) {
     NSDictionary *headers = @{@"Referer": @"https://www.bilibili.com/", @"Accept": @"application/json"};
     [KLHttp GET:url headers:headers completion:^(id json, NSData *data, NSHTTPURLResponse *response, NSError *error) {
         NSArray *episodes = nil;
-        if ([json isKindOfClass:[NSDictionary class]]) episodes = json[@"result"][@"episodes"];
+        if ([json isKindOfClass:[NSDictionary class]] && [json[@"result"] isKindOfClass:[NSDictionary class]]) {
+            episodes = json[@"result"][@"episodes"];
+        }
         if (![episodes isKindOfClass:[NSArray class]] || episodes.count == 0) {
             if (completion) completion(@[], error ?: [NSError errorWithDomain:@"KLDanmaku" code:-6 userInfo:@{NSLocalizedDescriptionKey: @"B 站番剧集数获取失败"}]);
             return;
         }
         NSDictionary *target = nil;
         for (NSDictionary *ep in episodes) {
+            if (![ep isKindOfClass:[NSDictionary class]]) continue;
             NSInteger epNum = [ep[@"ep"] integerValue] ?: [ep[@"title"] integerValue];
             if (epNum == episode) { target = ep; break; }
         }

@@ -24,7 +24,7 @@ static NSError *KLRuleError(NSString *message, NSInteger code) {
 #pragma mark - URL helpers
 
 - (NSString *)fullURLForRule:(KLRule *)rule path:(NSString *)path {
-    if (!path.length) return @"";
+    if (![path isKindOfClass:[NSString class]] || path.length == 0) return @"";
     NSString *p = [path stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     if ([p hasPrefix:@"http://"] || [p hasPrefix:@"https://"]) return p;
     if ([p hasPrefix:@"//"]) return [@"https:" stringByAppendingString:p];
@@ -39,7 +39,7 @@ static NSError *KLRuleError(NSString *message, NSInteger code) {
 }
 
 - (NSString *)replaceVariables:(NSString *)template variables:(NSDictionary *)variables {
-    NSString *result = template ?: @"";
+    NSString *result = [template isKindOfClass:[NSString class]] ? template : @"";
     for (NSString *key in variables) {
         id value = variables[key];
         NSString *s = [value isKindOfClass:[NSString class]] ? value : [value description];
@@ -169,7 +169,7 @@ static NSError *KLRuleError(NSString *message, NSInteger code) {
 #pragma mark - JSONPath lite
 
 - (NSArray *)evaluateJSONPath:(NSString *)path root:(id)root {
-    if (!path.length || root == nil) return @[];
+    if (![path isKindOfClass:[NSString class]] || !path.length || root == nil) return @[];
     NSString *p = [path stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     if ([p isEqualToString:@"$"]) return @[root];
     if ([p hasPrefix:@"$."]) p = [p substringFromIndex:2];

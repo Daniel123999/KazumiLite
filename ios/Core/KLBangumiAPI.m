@@ -99,8 +99,9 @@ static NSString *KLUserAgent(void) {
     NSString *url = [NSString stringWithFormat:@"%@/p1/trending/subjects?type=2&limit=%ld&offset=%ld", KLNextBase(), (long)limit, (long)offset];
     [KLHttp GET:url headers:[self headersWithAuth:NO] completion:^(id json, NSData *data, NSHTTPURLResponse *response, NSError *error) {
         NSMutableArray *items = [NSMutableArray array];
-        if ([json isKindOfClass:[NSDictionary class]]) {
+        if ([json isKindOfClass:[NSDictionary class]] && [json[@"data"] isKindOfClass:[NSArray class]]) {
             for (NSDictionary *wrapper in json[@"data"]) {
+                if (![wrapper isKindOfClass:[NSDictionary class]]) continue;
                 NSDictionary *subject = wrapper[@"subject"] ?: wrapper;
                 KLBangumiItem *item = [KLBangumiItem fromDictionary:subject];
                 if (item && item.bid > 0) [items addObject:item];
@@ -184,7 +185,7 @@ static NSString *KLUserAgent(void) {
     NSString *url = [NSString stringWithFormat:@"%@/p1/subjects/%ld/comments?limit=%ld&offset=%ld", KLNextBase(), (long)bid, (long)limit, (long)offset];
     [KLHttp GET:url headers:[self headersWithAuth:NO] completion:^(id json, NSData *data, NSHTTPURLResponse *response, NSError *error) {
         NSArray *list = nil;
-        if ([json isKindOfClass:[NSDictionary class]]) list = json[@"data"];
+        if ([json isKindOfClass:[NSDictionary class]] && [json[@"data"] isKindOfClass:[NSArray class]]) list = json[@"data"];
         else if ([json isKindOfClass:[NSArray class]]) list = json;
         if (completion) completion(list ?: @[], error);
     }];
@@ -240,9 +241,11 @@ static NSString *KLUserAgent(void) {
     if (token.length) h[@"Authorization"] = [@"Bearer " stringByAppendingString:token];
     [KLHttp GET:url headers:h completion:^(id json, NSData *data, NSHTTPURLResponse *response, NSError *error) {
         NSMutableArray *items = [NSMutableArray array];
-        if ([json isKindOfClass:[NSDictionary class]]) {
+        if ([json isKindOfClass:[NSDictionary class]] && [json[@"data"] isKindOfClass:[NSArray class]]) {
             for (NSDictionary *d in json[@"data"]) {
-                KLBangumiItem *item = [KLBangumiItem fromDictionary:d[@"subject"] ?: d];
+                if (![d isKindOfClass:[NSDictionary class]]) continue;
+                NSDictionary *subject = [d[@"subject"] isKindOfClass:[NSDictionary class]] ? d[@"subject"] : d;
+                KLBangumiItem *item = [KLBangumiItem fromDictionary:subject];
                 if (item.bid > 0) [items addObject:item];
             }
         }
