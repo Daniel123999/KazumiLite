@@ -81,8 +81,8 @@ static NSString *KLUserAgent(void) {
         NSMutableArray *items = [NSMutableArray array];
         if ([list isKindOfClass:[NSArray class]]) {
             for (NSDictionary *wrapper in list) {
-                NSDictionary *subject = [wrapper isKindOfClass:[NSDictionary class]] ? wrapper[@"subject"] : nil;
-                if (![subject isKindOfClass:[NSDictionary class]] && [wrapper isKindOfClass:[NSDictionary class]]) subject = wrapper;
+                if (![wrapper isKindOfClass:[NSDictionary class]]) continue;
+                NSDictionary *subject = [wrapper[@"subject"] isKindOfClass:[NSDictionary class]] ? wrapper[@"subject"] : wrapper;
                 KLBangumiItem *item = [KLBangumiItem fromDictionary:subject];
                 if (item && item.bid > 0) {
                     item.airWeekday = i;
@@ -187,7 +187,9 @@ static NSString *KLUserAgent(void) {
         NSArray *list = nil;
         if ([json isKindOfClass:[NSDictionary class]] && [json[@"data"] isKindOfClass:[NSArray class]]) list = json[@"data"];
         else if ([json isKindOfClass:[NSArray class]]) list = json;
-        if (completion) completion(list ?: @[], error);
+        NSMutableArray *clean = [NSMutableArray array];
+        for (id item in list) if ([item isKindOfClass:[NSDictionary class]]) [clean addObject:item];
+        if (completion) completion(clean, error);
     }];
 }
 
