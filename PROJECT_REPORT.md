@@ -96,14 +96,17 @@ ios/
 
 ## 5. 待验证 / 已知风险
 
-### 5.0 已有构建证据（2026-11-15）
+### 5.0 发布记录（2026-11-15）
 
-- GitHub Actions run `43695586882`（commit `abca965`）**成功**。
-- Artifact `KazumiLite-ipa` → `KazumiLite.ipa`，342,402 B。
-- SHA256 `BF0E663FD35D549D2B2AFB06487F2965282D9723330E5EF2BA1DF27A7B79C1EA`。
+- 源码提交 `3a6c4ce`；GitHub Actions run `43695846482` **成功**。
+- GitHub Release `v1.0.0`：release `445919738`，asset `750383215`，公开下载 206，343,130 B。
+- Gitee Release `v1.0.0`：release `1311513`，最终附件 `3705517`（`KazumiLite.ipa`，343,130 B）。
+- SHA256 `2B3BC813674BD440C8D7A390411DE01840EFA85F84CE043D17143E9753BF9455`。
 - `inspect_ipa.py`：`armv7 (cpu=12, subtype=9)`、`com.kazumilite.app`、`1.0.0 (1)`、minOS 9.0、schemes `kazumilite/kazumi`、资源 `rules/AGE.json`、`platform-application` entitlement 存在。
-- 本轮仅完成包级验证；**尚未在 iPhone 4S 真机安装启动**。
-- 注意：`repo_pipeline.py build` 在下载 Artifact 时遇到 401（SAS 重定向被重新编码），本次 IPA 由同一 Artifact 手动下载后验证。
+- 已验证包级；**尚未在 iPhone 4S 真机安装启动**。
+- Gitee 附件首次上传时被脚本保留了本地文件名（`KazumiLite-v1.0.0-build1-armv7.ipa`），已用 API 补传标准名 `KazumiLite.ipa`。
+- 本机访问 Gitee 下载链接返回 403（BDWAF），GitHub 下载正常；国内网络需实测 Gitee 可用性。
+- `repo_pipeline.py build` 下载 Artifact 时遇到 401（SAS 重定向被重新编码），最终 IPA 由同一 Artifact 手动下载并验证。
 
 ### 5.1 待真机验证
 
