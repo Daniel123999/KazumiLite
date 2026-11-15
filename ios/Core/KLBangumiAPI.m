@@ -18,8 +18,8 @@ static NSString *KLNextBase(void) {
     return @"https://next.bgm.tv";
 }
 
-static NSString *KLUserAgent(void) {
-    return @"KazumiLite/1.0 (iOS 9; armv7; https://github.com/Daniel123999/KazumiLite)";
+static NSString *KLMode(void) {
+    return [[KLStore shared] stringForKey:@"bangumiMode" defaultValue:@"official"];
 }
 
 @interface KLBangumiAPI ()
@@ -47,10 +47,36 @@ static NSString *KLUserAgent(void) {
 
 - (NSDictionary *)headersWithAuth:(BOOL)auth {
     NSMutableDictionary *h = [NSMutableDictionary dictionary];
-    h[@"User-Agent"] = KLUserAgent();
     h[@"Accept"] = @"application/json";
     if (auth && self.token.length) h[@"Authorization"] = [@"Bearer " stringByAppendingString:self.token];
     return h;
+}
+
+- (NSArray *)apiBaseCandidates {
+    NSMutableArray *bases = [NSMutableArray array];
+    NSString *current = KLApiBase();
+    if (current.length) [bases addObject:current];
+    for (NSString *candidate in @[@"https://api.bgm.tv", @"https://api.kazumi.fyi"]) {
+        if (![bases containsObject:candidate]) [bases addObject:candidate];
+    }
+    return bases;
+}
+
+- (NSArray *)nextBaseCandidates {
+    NSMutableArray *bases = [NSMutableArray array];
+    NSString *current = KLNextBase();
+    if (current.length) [bases addObject:current];
+    NSString *mode = KLMode();
+    if ([mode isEqualToString:@"mirror"]) {
+        for (NSString *candidate in @[@"https://next.bgm.tv", @"https://api.kazumi.fyi"]) {
+            if (![bases containsObject:candidate]) [bases addObject:candidate];
+        }
+    } else {
+        for (NSString *candidate in @[@"https://api.kazumi.fyi", @"https://next.bgm.tv"]) {
+            if (![bases containsObject:candidate]) [bases addObject:candidate];
+        }
+    }
+    return bases;
 }
 
 - (void)calendar:(void (^)(NSArray *, NSError *))completion {
@@ -95,48 +121,113 @@ static NSString *KLUserAgent(void) {
     if (completion) completion(days, nil);
 }
 
-- (void)trendingWithLimit:(NSInteger)limit offset:(NSInteger)offset completion:(void (^)(NSArray *, NSError *))completion {
-    NSString *url = [NSString stringWithFormat:@"%@/p1/trending/subjects?type=2&limit=%ld&offset=%ld", KLNextBase(), (long)limit, (long)offset];
+- (NSArray *)parseTrendingItems:(id)json {
+    NSMutableArray *items = [NSMutableArray array];
+    NSArray *list = nil;
+    if ([json isKindOfClass:[NSDictionary class]] && [json[@"data"] isKindOfClass:[NSArray class]]) {
+        list = json[@"data"];
+    } else if ([json isKindOfClass:[NSArray class]]) {
+        list = json;
+    }
+    for (NSDictionary *wrapper in list) {
+        if (![wrapper isKindOfClass:[NSDictionary class]]) continue;
+        NSDictionary *subject = [wrapper[@"subject"] isKindOfClass:[NSDictionary class]] ? wrapper[@"subject"] : wrapper;
+        KLBangumiItem *item = [KLBangumiItem fromDictionary:subject];
+        if (item && item.bid > 0) [items addObject:item];
+    }
+    return items;
+}
+
+- (void)fetchTrendingFromBases:(NSArray *)bases index:(NSInteger)index limit:(NSInteger)limit offset:(NSInteger)offset lastError:(NSError *)lastError completion:(void (^)(NSArray *, NSError *))completion {
+    if (index >= (NSInteger)bases.count) {
+        if (completion) completion(@[], lastError);
+        return;
+    }
+    NSString *base = bases[index];
+    NSString *url = [NSString stringWithFormat:@"%@/p1/trending/subjects?type=2&limit=%ld&offset=%ld", base, (long)limit, (long)offset];
+    __weak typeof(self) weakSelf = self;
     [KLHttp GET:url headers:[self headersWithAuth:NO] completion:^(id json, NSData *data, NSHTTPURLResponse *response, NSError *error) {
-        NSMutableArray *items = [NSMutableArray array];
-        if ([json isKindOfClass:[NSDictionary class]] && [json[@"data"] isKindOfClass:[NSArray class]]) {
-            for (NSDictionary *wrapper in json[@"data"]) {
-                if (![wrapper isKindOfClass:[NSDictionary class]]) continue;
-                NSDictionary *subject = wrapper[@"subject"] ?: wrapper;
-                KLBangumiItem *item = [KLBangumiItem fromDictionary:subject];
-                if (item && item.bid > 0) [items addObject:item];
-            }
-        }
-        if (items.count == 0) {
-            [self search:@"" limit:limit offset:offset completion:^(NSArray *list, NSInteger raw, NSError *e) {
-                if (completion) completion(list ?: @[], error ?: e);
-            }];
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        NSArray *items = [strongSelf parseTrendingItems:json];
+        if (items.count > 0) {
+            if (completion) completion(items, nil);
             return;
         }
-        if (completion) completion(items, error);
+        NSError *nextError = error;
+        if (!nextError && response.statusCode >= 400) {
+            nextError = [NSError errorWithDomain:@"KLBangumi" code:response.statusCode userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithFormat:@"HTTP %ld", (long)response.statusCode]}];
+        }
+        [strongSelf fetchTrendingFromBases:bases index:index + 1 limit:limit offset:offset lastError:nextError ?: lastError completion:completion];
+    }];
+}
+
+- (void)trendingWithLimit:(NSInteger)limit offset:(NSInteger)offset completion:(void (^)(NSArray *, NSError *))completion {
+    NSArray *bases = [self nextBaseCandidates];
+    __weak typeof(self) weakSelf = self;
+    [self fetchTrendingFromBases:bases index:0 limit:limit offset:offset lastError:nil completion:^(NSArray *items, NSError *error) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        if (items.count > 0) {
+            if (completion) completion(items, nil);
+            return;
+        }
+        [strongSelf search:@"" limit:limit offset:offset completion:^(NSArray *list, NSInteger raw, NSError *e) {
+            if (list.count > 0) {
+                if (completion) completion(list, nil);
+            } else {
+                if (completion) completion(@[], e ?: error);
+            }
+        }];
     }];
 }
 
 - (void)search:(NSString *)keyword limit:(NSInteger)limit offset:(NSInteger)offset completion:(void (^)(NSArray *, NSInteger, NSError *))completion {
-    NSString *url = [NSString stringWithFormat:@"%@/v0/search/subjects?limit=%ld&offset=%ld", KLApiBase(), (long)limit, (long)offset];
+    NSArray *bases = [self apiBaseCandidates];
     NSDictionary *body = @{
         @"keyword": keyword ?: @"",
         @"sort": @"heat",
         @"filter": @{@"type": @[@2], @"nsfw": @NO}
     };
-    [KLHttp POSTJSON:url headers:[self headersWithAuth:NO] body:body completion:^(id json, NSData *data, NSHTTPURLResponse *response, NSError *error) {
-        NSMutableArray *items = [NSMutableArray array];
-        NSInteger rawCount = 0;
-        if ([json isKindOfClass:[NSDictionary class]] && [json[@"data"] isKindOfClass:[NSArray class]]) {
-            NSArray *list = json[@"data"];
-            rawCount = list.count;
-            for (NSDictionary *dict in list) {
-                KLBangumiItem *item = [KLBangumiItem fromDictionary:dict];
-                if (item && item.bid > 0 && item.displayName.length) [items addObject:item];
-            }
+    __weak typeof(self) weakSelf = self;
+    __block void (^tryBase)(NSInteger, NSError *);
+    tryBase = ^(NSInteger index, NSError *lastError) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        if (index >= (NSInteger)bases.count) {
+            if (completion) completion(@[], 0, lastError);
+            return;
         }
-        if (completion) completion(items, rawCount, error);
-    }];
+        NSString *base = bases[index];
+        NSString *url = [NSString stringWithFormat:@"%@/v0/search/subjects?limit=%ld&offset=%ld", base, (long)limit, (long)offset];
+        [KLHttp POSTJSON:url headers:[strongSelf headersWithAuth:NO] body:body completion:^(id json, NSData *data, NSHTTPURLResponse *response, NSError *error) {
+            NSMutableArray *items = [NSMutableArray array];
+            NSInteger rawCount = 0;
+            if ([json isKindOfClass:[NSDictionary class]] && [json[@"data"] isKindOfClass:[NSArray class]]) {
+                NSArray *list = json[@"data"];
+                rawCount = list.count;
+                for (NSDictionary *dict in list) {
+                    KLBangumiItem *item = [KLBangumiItem fromDictionary:dict];
+                    if (item && item.bid > 0 && item.displayName.length) [items addObject:item];
+                }
+            }
+            BOOL success = (items.count > 0) || (!error && response.statusCode >= 200 && response.statusCode < 300);
+            if (success) {
+                if (completion) completion(items, rawCount, nil);
+                return;
+            }
+            NSError *nextError = error;
+            if (!nextError && response.statusCode >= 400) {
+                NSString *msg = [NSString stringWithFormat:@"HTTP %ld", (long)response.statusCode];
+                if (response.statusCode == 401 || response.statusCode == 403) {
+                    msg = [NSString stringWithFormat:@"%@（可能需要更换 Bangumi 线路或稍后重试）", msg];
+                }
+                nextError = [NSError errorWithDomain:@"KLBangumi" code:response.statusCode userInfo:@{NSLocalizedDescriptionKey: msg}];
+            }
+            tryBase(index + 1, nextError ?: lastError);
+        }];
+    };
+    tryBase(0, nil);
 }
 
 - (void)subject:(NSInteger)bid completion:(void (^)(KLBangumiItem *, NSError *))completion {

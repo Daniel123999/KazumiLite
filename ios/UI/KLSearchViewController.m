@@ -128,7 +128,11 @@
             [strongSelf.results addObjectsFromArray:items ?: @[]];
             [strongSelf.tableView reloadData];
             if (strongSelf.results.count == 0) {
-                strongSelf.hintLabel.text = error.localizedDescription ?: @"没有找到番剧";
+                NSString *msg = error.localizedDescription ?: @"没有找到番剧";
+                if ([error.domain isEqualToString:NSURLErrorDomain] && error.code == NSURLErrorTimedOut) {
+                    msg = @"请求超时，请检查网络或切换 Bangumi 线路后重试";
+                }
+                strongSelf.hintLabel.text = msg;
                 strongSelf.hintLabel.hidden = NO;
             }
         }];

@@ -173,6 +173,7 @@
         } else {
             strongSelf.emptyLabel.text = error.localizedDescription ?: @"时间表加载失败，请检查网络或切换 Bangumi 线路";
             strongSelf.emptyLabel.hidden = NO;
+            [strongSelf.collectionView reloadData];
         }
     }];
 }
@@ -202,8 +203,13 @@
             strongSelf.popularOffset += items.count;
             [strongSelf.collectionView reloadData];
         } else if (strongSelf.popular.count == 0) {
-            strongSelf.emptyLabel.text = error.localizedDescription ?: @"热门番剧加载失败";
+            NSString *msg = error.localizedDescription ?: @"热门番剧加载失败";
+            if ([error.domain isEqualToString:NSURLErrorDomain] && error.code == NSURLErrorTimedOut) {
+                msg = @"请求超时，请检查网络或在“我的 → Bangumi 线路”切换镜像后重试";
+            }
+            strongSelf.emptyLabel.text = msg;
             strongSelf.emptyLabel.hidden = NO;
+            [strongSelf.collectionView reloadData];
         }
     }];
 }

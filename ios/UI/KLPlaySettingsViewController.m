@@ -14,6 +14,9 @@
     [super viewDidLoad];
     self.title = @"播放设置";
     self.view.backgroundColor = [KLTheme background];
+    if ([self respondsToSelector:@selector(setAutomaticallyAdjustsScrollViewInsets:)]) {
+        self.automaticallyAdjustsScrollViewInsets = YES;
+    }
     self.rows = @[
         @{@"title": @"默认倍速", @"key": @"defaultSpeed", @"type": @"speed"},
         @{@"title": @"自动连播下一集", @"key": @"autoPlayNext", @"type": @"switch"},
@@ -24,6 +27,7 @@
         @{@"title": @"硬解优先（AVPlayer）", @"key": @"hwDecode", @"type": @"switch"}
     ];
     self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
+    self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
     [KLTheme styleTableView:self.tableView];
