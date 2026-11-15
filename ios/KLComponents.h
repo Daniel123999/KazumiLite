@@ -1,5 +1,6 @@
 #import <UIKit/UIKit.h>
 #import "KLModels.h"
+#import "KLImageLoader.h"
 
 typedef NS_ENUM(NSInteger, KLIconType) {
     KLIconCalendar = 0,

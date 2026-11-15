@@ -53,8 +53,6 @@
         _topLaneFree = [NSMutableArray array];
         _bottomLaneFree = [NSMutableArray array];
         [self reloadSettings];
-        _timer = [NSTimer timerWithTimeInterval:1.0 / 30.0 target:self selector:@selector(tick:) userInfo:nil repeats:YES];
-        [[NSRunLoop mainRunLoop] addTimer:_timer forMode:NSRunLoopCommonModes];
     }
     return self;
 }
