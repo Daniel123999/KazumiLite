@@ -1,11 +1,11 @@
 {
-  "version": "1.0.0",
-  "build": 1,
-  "tag": "v1.0.0",
+  "version": "1.0.1",
+  "build": 2,
+  "tag": "v1.0.1",
   "name": "KazumiLite",
   "minOS": "9.0",
-  "ipa": "https://gitee.com/jyz2574461147/kazumi-lite/releases/download/v1.0.0/KazumiLite.ipa",
-  "github": "https://github.com/Daniel123999/KazumiLite/releases/download/v1.0.0/KazumiLite.ipa",
-  "sha256": "2B3BC813674BD440C8D7A390411DE01840EFA85F84CE043D17143E9753BF9455",
-  "notes": "Build 1\n- 首个 iOS 9 / armv7 版本：Bangumi 时间表与搜索、Kazumi 规则、原生播放器、弹幕、追番、历史、WebDAV、下载与更新"
+  "ipa": "https://gitee.com/jyz2574461147/kazumi-lite/releases/download/v1.0.1/KazumiLite.ipa",
+  "github": "https://github.com/Daniel123999/KazumiLite/releases/download/v1.0.1/KazumiLite.ipa",
+  "sha256": "67927996308F3E2486C807372099EA6E021209A3B236C73C384FEFF5A4F34828",
+  "notes": "Build 2\n- 修复首页热门请求超时：多线路回退 + 搜索兜底 + 更明确的超时提示\n- 修复发现页 Bangumi 搜索 401：移除强制 User-Agent，多线路自动重试\n- 修复我的页面子窗口底部内容无法滚动查看：补充导航栏 inset 与自适应布局"
 }
