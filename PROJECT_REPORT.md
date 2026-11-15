@@ -128,6 +128,18 @@ ios/
 7. **历史续播**：保存道路 URL 数组，旧记录缺失时退化为单集。
 8. **Anime4K / SyncPlay / DLNA**：明确未实现，不应在发布说明中宣称已支持。
 
+### 5.2 v1.0.1（Build 2）发布记录（2026-11-15）
+
+- 修复：首页热门请求超时（多线路回退 + 搜索兜底 + 超时提示）、发现页 Bangumi 搜索 401（移除强制 UA，多线路重试）、我的页面子窗口底部无法滚动（导航栏 inset + 自适应布局）。
+- 源码提交 `26e15af`（版本 1.0.1/2）、`be44017`（Artifact 下载辅助脚本）；GitHub Actions run `43728270767` **成功**。
+- GitHub Release `v1.0.1`：release `446146397`，asset `751379618`，公开下载 206，346,944 B。
+- Gitee Release `v1.0.1`：release `1312951`，asset `3709630`（`KazumiLite.ipa`，346,944 B）；本机公开下载校验返回 403（BDWAF），与 v1.0.0 现象一致，需国内网络实测。
+- SHA256 `67927996308F3E2486C807372099EA6E021209A3B236C73C384FEFF5A4F34828`。
+- `inspect_ipa.py`：`armv7 (cpu=12, subtype=9)`、`com.kazumilite.app`、`1.0.1 (2)`、minOS 9.0、schemes `kazumilite/kazumi`、`platform-application` entitlement 存在；`RESULT: OK`。
+- 已验证包级并保存到 `artifacts/verified-ipas/KazumiLite-v1.0.1-build2-armv7.ipa`；**尚未在 iPhone 4S 真机安装启动**。
+- Artifact 下载仍遇 401（SAS 重定向携带 token），已新增 `scripts/fetch_artifact.py` 先取签名直链、跳转时不携带 token 完成下载。
+- `update.json` 已更新为 1.0.1 / build 2 / v1.0.1 / 新 SHA256。
+
 ## 6. 下一步
 
 1. 运行 GitHub Actions，修复首个编译/链接错误。
