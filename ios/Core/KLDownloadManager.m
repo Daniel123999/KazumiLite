@@ -228,7 +228,7 @@
     NSMutableArray *segments = [NSMutableArray array];
     NSMutableArray *durations = [NSMutableArray array];
     NSString *keyURI = nil;
-    NSData *keyData = nil;
+    __block NSData *keyData = nil;
     NSData *iv = nil;
     NSString *mapURI = nil;
     double maxDuration = 0;
@@ -276,7 +276,8 @@
     NSString *dir = [[KLStore shared].downloadsPath stringByAppendingPathComponent:entry.identifier];
     [[NSFileManager defaultManager] createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:NULL];
 
-    NSString *ext = [segments.firstObject.pathExtension length] ? segments.firstObject.pathExtension : @"ts";
+    NSString *firstSegment = [segments.firstObject isKindOfClass:[NSString class]] ? segments.firstObject : @"";
+    NSString *ext = firstSegment.pathExtension.length ? firstSegment.pathExtension : @"ts";
     NSMutableArray *names = [NSMutableArray array];
     for (NSInteger i = 0; i < (NSInteger)segments.count; i++) [names addObject:[NSString stringWithFormat:@"seg_%05ld.%@", (long)i, ext]];
 

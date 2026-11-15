@@ -97,8 +97,8 @@
             strongSelf.resultLabel.text = error.localizedDescription ?: @"没有识别到结果";
             return;
         }
-        NSDictionary *anilist = best[@"anilist"];
-        NSDictionary *title = anilist[@"title"];
+        NSDictionary *anilist = [best[@"anilist"] isKindOfClass:[NSDictionary class]] ? best[@"anilist"] : nil;
+        NSDictionary *title = [anilist[@"title"] isKindOfClass:[NSDictionary class]] ? anilist[@"title"] : nil;
         NSString *name = title[@"native"] ?: title[@"romaji"] ?: title[@"english"];
         if (![name isKindOfClass:[NSString class]]) name = @"未知番剧";
         double similarity = [best[@"similarity"] doubleValue];

@@ -17,7 +17,7 @@ KazumiLite_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-deprecated-modu
 	-I. -IModels -ICore -IUI \
 	-I$(THEOS)/sdks/iPhoneOS9.3.sdk/usr/include/libxml2
 KazumiLite_INFOPLIST = $(THEOS_PROJECT_DIR)/Info.plist
-KazumiLite_RESOURCE_DIRS = icons
+KazumiLite_RESOURCE_DIRS = Resources icons
 KazumiLite_LDFLAGS = -Wl,-undefined,dynamic_lookup
 
 include $(THEOS_MAKE_PATH)/application.mk

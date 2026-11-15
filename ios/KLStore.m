@@ -235,6 +235,17 @@ static NSString *KLSettingKey(NSString *key) { return [@"kl." stringByAppendingS
 
     // Bundled defaults first (lower priority).
     NSString *bundleRules = [[NSBundle mainBundle] pathForResource:@"rules" ofType:nil];
+    if (!bundleRules) bundleRules = [[NSBundle mainBundle] pathForResource:@"rules" ofType:nil inDirectory:@"Resources"];
+    if (!bundleRules) {
+        NSString *resourceRoot = [[NSBundle mainBundle] resourcePath];
+        NSArray *top = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:resourceRoot error:NULL];
+        for (NSString *name in top) {
+            if ([name isEqualToString:@"rules"]) {
+                bundleRules = [resourceRoot stringByAppendingPathComponent:name];
+                break;
+            }
+        }
+    }
     NSArray *names = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:bundleRules error:NULL];
     for (NSString *name in names) {
         if (![name.pathExtension.lowercaseString isEqualToString:@"json"]) continue;

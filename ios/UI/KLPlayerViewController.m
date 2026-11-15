@@ -6,6 +6,7 @@
 #import "KLDanmakuAPI.h"
 #import "KLWebViewController.h"
 #import "KLDanmakuView.h"
+#import "KLDlnaController.h"
 #import <AVFoundation/AVFoundation.h>
 #import <MediaPlayer/MediaPlayer.h>
 #import <CoreImage/CoreImage.h>
@@ -52,6 +53,7 @@
 @property (nonatomic, assign) BOOL ended;
 @property (nonatomic, assign) BOOL usingWeb;
 @property (nonatomic, assign) NSInteger danmakuEpisode;
+@property (nonatomic, copy) NSString *resolvedURL;
 @property (nonatomic, strong) id videoOutput;
 
 @end
@@ -315,6 +317,7 @@
 - (void)playVideoURL:(NSString *)url headers:(NSDictionary *)headers pageURL:(NSString *)pageURL {
     [self.spinner stopAnimating];
     self.statusLabel.text = @"";
+    self.resolvedURL = url;
     NSMutableDictionary *options = [NSMutableDictionary dictionary];
     if (headers.count) options[@"AVURLAssetHTTPHeaderFieldsKey"] = headers;
     NSURL *mediaURL = [NSURL URLWithString:url];
@@ -605,8 +608,42 @@
     [ac addAction:[UIAlertAction actionWithTitle:@"网页播放" style:UIAlertActionStyleDefault handler:^(UIAlertAction *a) {
         [self openWebPlayer];
     }]];
+    [ac addAction:[UIAlertAction actionWithTitle:@"投屏到电视（DLNA）" style:UIAlertActionStyleDefault handler:^(UIAlertAction *a) {
+        [self castToTV];
+    }]];
     [ac addAction:[UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil]];
     [self presentViewController:ac animated:YES completion:nil];
+}
+
+- (void)castToTV {
+    if (!self.resolvedURL.length || [self.resolvedURL hasPrefix:@"file://"]) {
+        [KLTheme showToast:@"当前视频不支持投屏（本地缓存或未解析）" inView:self.view];
+        return;
+    }
+    [KLComponents showHUD:@"正在发现 DLNA 设备…" inView:self.view];
+    __weak typeof(self) weakSelf = self;
+    [[KLDlnaController shared] discover:^(NSArray *devices, NSError *error) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        [KLComponents hideHUDInView:strongSelf.view];
+        if (devices.count == 0) {
+            [KLTheme showToast:error.localizedDescription ?: @"没有发现设备" inView:strongSelf.view];
+            return;
+        }
+        UIAlertController *ac = [UIAlertController alertControllerWithTitle:@"选择投屏设备" message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+        for (KLDlnaDevice *device in devices) {
+            [ac addAction:[UIAlertAction actionWithTitle:device.name style:UIAlertActionStyleDefault handler:^(UIAlertAction *a) {
+                [KLComponents showHUD:@"正在投屏…" inView:strongSelf.view];
+                [[KLDlnaController shared] castURL:strongSelf.resolvedURL toDevice:device completion:^(BOOL ok, NSString *message) {
+                    [KLComponents hideHUDInView:strongSelf.view];
+                    [KLTheme showToast:ok ? [NSString stringWithFormat:@"已投屏到 %@", device.name] : message inView:strongSelf.view];
+                    if (ok) [strongSelf.player pause];
+                }];
+            }]];
+        }
+        [ac addAction:[UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil]];
+        [strongSelf presentViewController:ac animated:YES completion:nil];
+    }];
 }
 
 - (void)cycleSpeed {
