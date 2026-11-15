@@ -272,7 +272,7 @@
         if (t > item.start + item.duration - 0.4) alpha = MAX(0.0, (item.start + item.duration - t) / 0.4);
         NSMutableDictionary *attrs = [NSMutableDictionary dictionary];
         attrs[NSFontAttributeName] = font;
-        attrs[NSForegroundColorAttributeName] = [item.color colorWithAlphaComponent:item.color.alpha * alpha];
+        attrs[NSForegroundColorAttributeName] = [item.color colorWithAlphaComponent:CGColorGetAlpha(item.color.CGColor) * alpha];
         attrs[NSStrokeColorAttributeName] = [[UIColor blackColor] colorWithAlphaComponent:0.7 * alpha];
         attrs[NSStrokeWidthAttributeName] = self.showBorder ? @(-2.5) : @0;
         attrs[NSParagraphStyleAttributeName] = ps;
