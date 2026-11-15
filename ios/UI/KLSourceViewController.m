@@ -174,6 +174,12 @@
                                                                           roadIndex:self.selectedRoad
                                                                        episodeIndex:index
                                                                        episodeTitle:title];
+    for (KLHistoryEntry *h in [[KLStore shared] history]) {
+        if (h.bangumi.bid == self.bangumi.bid && [h.ruleName isEqualToString:(self.rule.name ?: @"")] && h.episodeNumber == index + 1) {
+            player.initialPosition = h.position;
+            break;
+        }
+    }
     player.modalPresentationStyle = UIModalPresentationFullScreen;
     [self presentViewController:player animated:YES completion:nil];
 }

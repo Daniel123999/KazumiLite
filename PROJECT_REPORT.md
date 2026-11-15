@@ -54,11 +54,12 @@
 | WebDAV 同步 | NSURLSession + PROPFIND/MKCOL/PUT/GET | 已实现（JSON 合并） |
 | 下载 | HLS 分片 + AES-128 解密 + 本地 m3u8 | 已实现（顺序下载） |
 | 应用内更新 | update.json + ipainstaller/MobileInstallation | 已实现 |
-| 图片识番 | trace.moe multipart | 未实现（预留） |
+| 图片识番 | trace.moe multipart 上传 + Bangumi 匹配 | 已实现 |
 | Anime4K 超分 | A5/AVPlayer 无法承载多 pass 着色器 | 明确不支持 |
 | SyncPlay 一起看 | 需要 SyncPlay 协议与公共服务器 | 未实现 |
-| DLNA 投屏 | 需要 SSDP + AVTransport | 未实现 |
+| DLNA 投屏 | SSDP 发现 + AVTransport SOAP | 已实现（基础） |
 | 系统代理 | iOS 9 无公开全局代理 API | 仅镜像/自定义域名 |
+| 外部播放器 | 可复制链接 / 网页播放兜底 | 部分支持 |
 
 ## 3. 工程结构
 
@@ -76,6 +77,7 @@ ios/
   Core/KLDanmakuAPI          弹弹Play / B 站 / 本地缓存
   Core/KLWebDAV              备份/恢复/双向合并
   Core/KLDownloadManager     HLS/MP4 下载、AES 解密、本地播放列表
+  Core/KLDlnaController      SSDP 发现 + AVTransport 投屏
   Core/KLUpdater             update.json + IPA 安装 + 重启
   UI/...                     时间表、搜索、详情、选源、剧集、播放器、追番、历史、规则、设置
   Resources/rules/           内置规则（AGE/7sefun/giriGiriLove/mutefun）

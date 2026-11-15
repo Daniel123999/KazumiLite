@@ -62,7 +62,7 @@ static BOOL KLIsAdURL(NSString *url) {
 
     WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
     config.allowsInlineMediaPlayback = YES;
-    config.mediaPlaybackRequiresUserGesture = NO;
+    config.mediaPlaybackRequiresUserAction = NO;
     WKUserContentController *controller = [[WKUserContentController alloc] init];
     [controller addScriptMessageHandler:self name:@"klvideo"];
     [controller addScriptMessageHandler:self name:@"kllog"];

@@ -3,6 +3,7 @@
 #import "KLStore.h"
 #import "KLHttp.h"
 #import <CommonCrypto/CommonDigest.h>
+#import <string.h>
 
 static NSString *KLMD5(NSString *string) {
     const char *cstr = [string UTF8String];
