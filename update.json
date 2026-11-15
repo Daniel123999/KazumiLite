@@ -1,0 +1,11 @@
+{
+  "version": "1.0.0",
+  "build": 1,
+  "tag": "v1.0.0",
+  "name": "KazumiLite",
+  "minOS": "9.0",
+  "ipa": "https://gitee.com/jyz2574461147/kazumi-lite/releases/download/v1.0.0/KazumiLite.ipa",
+  "github": "https://github.com/Daniel123999/KazumiLite/releases/download/v1.0.0/KazumiLite.ipa",
+  "sha256": "",
+  "notes": "Build 1\n- 首个 iOS 9 / armv7 版本：Bangumi 时间表与搜索、Kazumi 规则、原生播放器、弹幕、追番、历史、WebDAV、下载与更新"
+}

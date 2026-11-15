@@ -1,0 +1,144 @@
+name: Build iOS 9 armv7 IPA
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  THEOS: ${{ github.workspace }}/theos
+  APP_NAME: KazumiLite
+  ARTIFACT_NAME: KazumiLite-ipa
+  IPA_ASSET_NAME: KazumiLite.ipa
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential clang lld make git curl xz-utils libssl-dev zip unzip python3 fakeroot rsync perl libxml2 libxml2-dev
+          sudo apt-get install -y libtinfo5 || sudo apt-get install -y libncurses5 || true
+          if ! ldconfig -p | grep -q 'libtinfo\.so\.5'; then
+            T6=$(ldconfig -p | grep 'libtinfo\.so\.6' | head -1 | awk '{print $NF}')
+            [ -n "$T6" ] && sudo ln -sf "$T6" /usr/lib/x86_64-linux-gnu/libtinfo.so.5 || true
+          fi
+          if ! ldconfig -p | grep -q 'libncurses\.so\.5'; then
+            N6=$(ldconfig -p | grep 'libncurses\.so\.6' | head -1 | awk '{print $NF}')
+            [ -n "$N6" ] && sudo ln -sf "$N6" /usr/lib/x86_64-linux-gnu/libncurses.so.5 || true
+          fi
+          sudo apt-get install -y ldid || echo "ldid not packaged, will build unsigned"
+          sudo tee /usr/local/bin/plutil >/dev/null <<'EOF'
+          #!/usr/bin/env bash
+          args=("$@")
+          out=""; in=""
+          i=0
+          while [ $i -lt ${#args[@]} ]; do
+            case "${args[$i]}" in
+              -o) i=$((i+1)); out="${args[$i]}";;
+              -convert) i=$((i+1));;
+              *) in="${args[$i]}";;
+            esac
+            i=$((i+1))
+          done
+          if [ -n "$out" ] && [ -n "$in" ]; then cp "$in" "$out"; exit 0; fi
+          if [ -n "$in" ]; then cat "$in"; exit 0; fi
+          exit 0
+          EOF
+          sudo chmod +x /usr/local/bin/plutil
+
+      - name: Clone theos
+        run: |
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$THEOS"
+          echo "$THEOS/bin" >> "$GITHUB_PATH"
+
+      - name: Install iOS toolchain (Linux)
+        run: |
+          mkdir -p "$THEOS/toolchain"
+          curl -sL https://github.com/L1ghtmann/llvm-project/releases/latest/download/iOSToolchain-x86_64.tar.xz -o /tmp/iostc.tar.xz
+          ls -l /tmp/iostc.tar.xz
+          tar -xJf /tmp/iostc.tar.xz -C "$THEOS/toolchain"
+          ls "$THEOS/toolchain/linux/iphone/bin" | head -20
+          echo "$THEOS/toolchain/linux/iphone/bin" >> "$GITHUB_PATH"
+
+      - name: Download iPhoneOS9.3 SDK (armv7)
+        run: |
+          rm -rf "$THEOS/sdks"
+          git clone --filter=blob:none --no-checkout --depth 1 \
+            https://github.com/theos/sdks.git "$THEOS/sdks"
+          cd "$THEOS/sdks"
+          git sparse-checkout init --cone
+          git sparse-checkout set iPhoneOS9.3.sdk
+          git checkout
+          ls -1 "$THEOS/sdks"
+
+      - name: Patch iPhoneOS9.3 SDK for modern clang/ld
+        run: |
+          python3 - <<'PY'
+          import os, re, shutil
+          sdk = os.path.join(os.environ["THEOS"], "sdks", "iPhoneOS9.3.sdk")
+          jsc = os.path.join(sdk, "System/Library/PrivateFrameworks/JavaScriptCore.framework")
+          if os.path.isdir(jsc):
+              shutil.rmtree(jsc)
+              print("removed private JavaScriptCore.framework")
+          patched = 0
+          arch_re = re.compile(r"^archs:\s*\[([^\]]*)\]", re.M)
+          def fix_archs(match):
+              archs = [a.strip() for a in match.group(1).split(",") if a.strip()]
+              keep = [a for a in archs if a not in ("i386", "x86_64")]
+              return "archs:                 [ " + ", ".join(keep) + " ]"
+          for dirpath, _, files in os.walk(sdk):
+              for name in files:
+                  if not (name.endswith(".tbd") or name.endswith(".dylib")):
+                      continue
+                  path = os.path.join(dirpath, name)
+                  try:
+                      with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                          text = f.read()
+                  except OSError:
+                      continue
+                  if not text.startswith("---"):
+                      continue
+                  new = text.replace("/usr/lib/system/liblaunch.dylib, ", "")
+                  new = arch_re.sub(fix_archs, new, count=1)
+                  if new != text:
+                      with open(path, "w", encoding="utf-8") as f:
+                          f.write(new)
+                      patched += 1
+          print("patched %d stub files" % patched)
+          PY
+
+      - name: Build
+        working-directory: ios
+        run: |
+          make clean || true
+          make TARGET=iphone:clang:9.3:9.0 ARCHS=armv7 FINALPACKAGE=1
+          find .theos -maxdepth 5 -name "*.app" -type d || true
+
+      - name: Package unsigned IPA
+        working-directory: ios
+        env:
+          OUTPUT_IPA_NAME: ${{ env.IPA_ASSET_NAME }}
+        run: |
+          chmod +x make_ipa.sh
+          APP_NAME="$APP_NAME" OUTPUT_IPA_NAME="$OUTPUT_IPA_NAME" ./make_ipa.sh
+          ls -l "$OUTPUT_IPA_NAME"
+
+      - name: Inspect binary
+        working-directory: ios
+        run: |
+          BIN="$(find .theos -type f -name KazumiLite -perm -u+x | head -1)"
+          file "$BIN" || true
+          otool -L "$BIN" 2>/dev/null | head -30 || true
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ios/${{ env.IPA_ASSET_NAME }}
+          if-no-files-found: error

@@ -1,0 +1,10 @@
+artifacts/
+.theos/
+*.ipa
+*.deb
+*.token
+*token*.txt
+.env
+.DS_Store
+build-result.json
+publish-*.json
