@@ -40,7 +40,7 @@
           @{@"title": @"清理图片缓存", @"sub": @"释放本地存储空间", @"action": @"clearCache"}],
         @[@{@"title": @"夜间模式", @"action": @"dark", @"switch": @"dark"},
           @{@"title": @"自动检查更新", @"action": @"autoUpdate", @"switch": @"autoUpdate"}],
-        @[@{@"title": @"检查更新", @"sub": @"当前版本 1.0.0 (Build 1)", @"action": @"checkUpdate"},
+        @[@{@"title": @"检查更新", @"sub": @"当前版本 1.0.1 (Build 2)", @"action": @"checkUpdate"},
           @{@"title": @"关于 Kazumi Lite", @"sub": @"GPL-3.0 · 项目说明与免责声明", @"action": @"about"}]
     ];
 
@@ -194,7 +194,7 @@
             return;
         }
         BOOL newer = [KLUpdater isReleaseNewer:releaseInfo];
-        NSString *msg = [NSString stringWithFormat:@"当前 1.0.0 (Build 1)\n最新 %@ (Build %@)\n\n%@", releaseInfo[@"version"], releaseInfo[@"build"], releaseInfo[@"notes"] ?: @""];
+        NSString *msg = [NSString stringWithFormat:@"当前 1.0.1 (Build 2)\n最新 %@ (Build %@)\n\n%@", releaseInfo[@"version"], releaseInfo[@"build"], releaseInfo[@"notes"] ?: @""];
         UIAlertController *ac = [UIAlertController alertControllerWithTitle:newer ? @"发现新版本" : @"已是最新版本" message:msg preferredStyle:UIAlertControllerStyleAlert];
         if (newer) {
             [ac addAction:[UIAlertAction actionWithTitle:@"更新" style:UIAlertActionStyleDefault handler:^(UIAlertAction *a) {

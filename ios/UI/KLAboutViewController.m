@@ -17,7 +17,7 @@
     text.font = [KLTheme font:13];
     text.editable = NO;
     text.textContainerInset = UIEdgeInsetsMake(16, 16, 24, 16);
-    text.text = @"Kazumi Lite 1.0.0 (Build 1)\n\n"
+    text.text = @"Kazumi Lite 1.0.1 (Build 2)\n\n"
         @"面向 iPhone 4S / iOS 9.3.6 / armv7 的番剧采集与在线观看客户端，"
         @"参考 Predidit/Kazumi 的功能与规则格式，使用 Objective-C + UIKit + Theos 重写。\n\n"
         @"## 已实现\n"
